@@ -41,6 +41,34 @@ export default function ExpenseForm({ onSubmit, initialData, isEditing = false }
     }
   }
 
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    if (value === '' || value === null || value === undefined) {
+      setFormData({ ...formData, amount: 0 })
+      return
+    }
+    
+    const parsedAmount = parseFloat(value)
+    if (isNaN(parsedAmount)) {
+      setFormData({ ...formData, amount: 0 })
+    } else {
+      setFormData({ ...formData, amount: parsedAmount })
+    }
+  }
+
+  const getSafeAmountValue = () => {
+    // Ensure we always return a valid number or empty string, never NaN
+    if (formData.amount === null || formData.amount === undefined) {
+      return '0'
+    }
+    
+    if (isNaN(formData.amount)) {
+      return '0'
+    }
+    
+    return formData.amount.toString()
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
       <h2 className="text-xl font-bold text-gray-900 dark:text-white">
@@ -57,8 +85,14 @@ export default function ExpenseForm({ onSubmit, initialData, isEditing = false }
           step="0.01"
           min="0.01"
           required
-          value={formData.amount}
-          onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) })}
+          value={getSafeAmountValue()}
+          onChange={handleAmountChange}
+          onBlur={() => {
+            // Normalize the value when user leaves the field
+            if (formData.amount < 0.01) {
+              setFormData({ ...formData, amount: 0.01 })
+            }
+          }}
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm"
         />
       </div>
@@ -71,7 +105,7 @@ export default function ExpenseForm({ onSubmit, initialData, isEditing = false }
           type="text"
           id="description"
           required
-          value={formData.description}
+          value={formData.description || ''}
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm"
           placeholder="What did you spend money on?"
@@ -85,7 +119,7 @@ export default function ExpenseForm({ onSubmit, initialData, isEditing = false }
         <select
           id="category"
           required
-          value={formData.category}
+          value={formData.category || ''}
           onChange={(e) => setFormData({ ...formData, category: e.target.value })}
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm"
         >
@@ -106,7 +140,7 @@ export default function ExpenseForm({ onSubmit, initialData, isEditing = false }
           type="date"
           id="date"
           required
-          value={formData.date}
+          value={formData.date || ''}
           onChange={(e) => setFormData({ ...formData, date: e.target.value })}
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm"
         />

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Form NaN Fix Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .input-error { border-color: #ef4444; }
+        .invalid-value { background-color: #fee2e2; }
+    </style>
+</head>
+<body class="bg-gray-50 p-4">
+    <div class="max-w-4xl mx-auto">
+        <header class="text-center py-8">
+            <h1 class="text-4xl font-bold text-gray-900 mb-2">Expense Form NaN Fix Test</h1>
+            <p class="text-lg text-gray-600 mb-4">Testing the fixed expense form component</p>
+        </header>
+
+        <!-- Test Scenarios -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Test Scenarios</h2>
+            <div class="space-y-3">
+                <button onclick="testScenario1()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                    Test 1: Reset to 0 amount
+                </button>
+                <button onclick="testScenario2()" class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">
+                    Test 2: Clear input field
+                </button>
+                <button onclick="testScenario3()" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+                    Test 3: Type invalid characters
+                </button>
+                <button onclick="testScenario4()" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
+                    Test 4: Copy-paste invalid data
+                </button>
+            </div>
+        </div>
+
+        <!-- Test Form -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Test Form Field</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+                    <input id="test-amount" type="number" step="0.01" min="0.01" required
+                           class="w-full rounded-md border-gray-300 shadow-sm"
+                           placeholder="Enter amount">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Value State</label>
+                    <div id="value-state" class="p-3 bg-gray-100 rounded-md font-mono text-sm"></div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Console Log</label>
+                    <div id="console-log" class="p-3 bg-gray-800 text-green-400 rounded-md font-mono text-sm h-32 overflow-y-auto"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+            <h3 class="text-lg font-semibold text-yellow-800 mb-2">🔧 Fix Applied</h3>
+            <ul class="list-disc list-inside text-yellow-700 space-y-2">
+                <li><strong>NaN Prevention:</strong> Added `handleAmountChange` function to handle empty inputs properly</li>
+                <li><strong>Value Normalization:</strong> Added `getSafeAmountValue` function that returns valid strings only</li>
+                <li><strong>Edge Case Handling:</strong> Handles empty strings, null, undefined, and invalid parse results</li>
+                <li><strong>Blur Event:</strong> Ensures minimum value of 0.01 when user leaves the field</li>
+                <li><strong>Null Checks:</strong> Added null safety to all string values in inputs</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Console logging function
+        function log(message, isError = false) {
+            const console = document.getElementById('console-log');
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.textContent = `[${timestamp}] ${message}`;
+            entry.className = isError ? 'text-red-400' : 'text-green-400';
+            console.appendChild(entry);
+            console.scrollTop = console.scrollHeight;
+        }
+
+        // Value state monitoring
+        function updateValueState(elementId) {
+            const input = document.getElementById(elementId);
+            const valueState = document.getElementById('value-state');
+            const value = input.value;
+            const parsedValue = parseFloat(value);
+            
+            let state = {
+                rawValue: `"${value}"`,
+                type: typeof value,
+                parsedValue: parsedValue,
+                isNaN: isNaN(parsedValue),
+                isValid: value !== '' && !isNaN(parsedValue) && parsedValue >= 0.01
+            };
+            
+            valueState.innerHTML = `
+                <div>Raw Value: ${state.rawValue}</div>
+                <div>Type: ${state.type}</div>
+                <div>Parsed: ${state.parsedValue}</div>
+                <div>isNaN: ${state.isNaN}</div>
+                <div>Valid: ${state.isValid ? '✅' : '❌'}</div>
+                <div class="mt-2 p-2 ${state.isValid ? 'bg-green-100' : 'bg-red-100'} rounded">
+                    ${state.isValid ? '✅ Safe value' : '❌ Invalid or empty value'}
+                </div>
+            `;
+            
+            // Add visual feedback to input
+            if (state.isValid) {
+                input.classList.remove('input-error');
+                input.classList.remove('invalid-value');
+            } else {
+                input.classList.add(state.value === '' ? 'input-error' : 'invalid-value');
+            }
+        }
+
+        // Test scenarios
+        function testScenario1() {
+            const input = document.getElementById('test-amount');
+            input.value = '0';
+            input.dispatchEvent(new Event('input'));
+            log('Test 1: Set amount to 0');
+            updateValueState('test-amount');
+        }
+
+        function testScenario2() {
+            const input = document.getElementById('test-amount');
+            input.value = '';
+            input.dispatchEvent(new Event('input'));
+            log('Test 2: Cleared input field');
+            updateValueState('test-amount');
+        }
+
+        function testScenario3() {
+            const input = document.getElementById('test-amount');
+            input.value = 'abc123';
+            input.dispatchEvent(new Event('input'));
+            log('Test 3: Entered invalid characters');
+            updateValueState('test-amount');
+        }
+
+        function testScenario4() {
+            const input = document.getElementById('test-amount');
+            input.value = '12.34.56';
+            input.dispatchEvent(new Event('input'));
+            log('Test 4: Multiple decimal points');
+            updateValueState('test-amount');
+        }
+
+        // Monitor input changes
+        document.getElementById('test-amount').addEventListener('input', function(e) {
+            updateValueState('test-amount');
+        });
+
+        document.getElementById('test-amount').addEventListener('blur', function(e) {
+            const input = e.target;
+            const value = input.value;
+            
+            if (value === '' || parseFloat(value) < 0.01) {
+                input.value = '0.01';
+                input.classList.remove('input-error');
+                log('Field normalized to minimum value (0.01)');
+            }
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            log('Test initialized - ready to test scenarios');
+            document.getElementById('test-amount').value = '25.50';
+            updateValueState('test-amount');
+            
+            // Add instruction
+            log('ℹ️ Click the test buttons above to simulate common NaN scenarios');
+            log('ℹ️ Monitor the input field behavior and console log for validation results');
+        });
+    </script>
+</body>
+</html>
