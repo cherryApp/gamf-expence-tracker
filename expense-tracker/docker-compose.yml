@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: expense_postgres
+    environment:
+      POSTGRES_DB: expense_tracker
+      POSTGRES_USER: expense_user
+      POSTGRES_PASSWORD: expense_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - expense_network
+
+  nextjs:
+    build: .
+    container_name: expense_tracker
+    ports:
+      - "3000:3000"
+    environment:
+      - ENV_VAR=production
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - postgres
+    networks:
+      - expense_network
+    command: sh -c "npm install && npm run dev"
+
+volumes:
+  postgres_data:
+
+networks:
+  expense_network:
+    driver: bridge

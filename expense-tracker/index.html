@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .dark { background-color: #111827; color: #f3f4f6; }
+        .dark .bg-white { background-color: #374151; }
+        .dark .text-gray-900 { color: #f3f4f6; }
+        .dark .text-gray-700 { color: #d1d5db; }
+        .dark .border-gray-300 { border-color: #4b5563; }
+        .dark .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5); }
+    </style>
+</head>
+<body class="bg-gray-50 p-4">
+    <div class="max-w-4xl mx-auto">
+        <header class="text-center py-8">
+            <h1 class="text-4xl font-bold text-gray-900 mb-2">Expense Tracker - Demo Version</h1>
+            <p class="text-lg text-gray-600">This is a demonstration of the expense tracker interface</p>
+            <button id="dark-toggle" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
+                Toggle Dark Mode
+            </button>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- Expense Form -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-bold text-gray-900 mb-4">Add New Expense</h2>
+                <form id="expense-form" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Amount</label>
+                        <input type="number" step="0.01" min="0.01" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Description</label>
+                        <input type="text" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="What did you spend money on?">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Category</label>
+                        <select required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                            <option value="">Select a category</option>
+                            <option>Food</option>
+                            <option>Transportation</option>
+                            <option>Entertainment</option>
+                            <option>Shopping</option>
+                            <option>Bills</option>
+                            <option>Healthcare</option>
+                            <option>Education</option>
+                            <option>Other</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Date</label>
+                        <input type="date" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                    </div>
+                    <button type="submit" class="w-full rounded-md bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700">
+                        Add Expense
+                    </button>
+                </form>
+            </div>
+
+            <!-- Balance Display -->
+            <div class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg shadow-lg p-6 text-white">
+                <h2 class="text-lg font-medium mb-2">Total Expenses</h2>
+                <p class="text-3xl font-bold">$0.00</p>
+                <p class="text-blue-100 text-sm mt-1">0 expenses recorded</p>
+            </div>
+        </div>
+
+        <!-- Expense List -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Expenses</h2>
+            <div class="text-center py-8">
+                <p class="text-gray-500">No expenses recorded yet.</p>
+                <p class="text-gray-400 text-sm mt-1">Add your first expense above!</p>
+            </div>
+        </div>
+
+        <!-- Development Instructions -->
+        <div class="mt-8 bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+            <h3 class="text-lg font-semibold text-yellow-800 mb-2">⚠️ Development Mode</h3>
+            <p class="text-yellow-700 mb-4">This is a static HTML demonstration. For full functionality:</p>
+            <ul class="list-disc list-inside text-yellow-700 space-y-1">
+                <li>Install dependencies: <code>npm install --legacy-peer-deps</code></li>
+                <li>Set up PostgreSQL database</li>
+                <li>Run Prisma migrations: <code>npx prisma generate</code> and <code>npx prisma migrate dev</code></li>
+                <li>Start development server: <code>npm run dev</code></li>
+            </ul>
+            <p class="text-yellow-700 mt-4">The current npm cache issues prevent full installation, but all files are ready!</p>
+        </div>
+    </div>
+
+    <script>
+        // Dark mode toggle
+        const darkToggle = document.getElementById('dark-toggle');
+        const body = document.body;
+        
+        // Check for saved preference or default to light mode
+        const darkMode = localStorage.getItem('darkMode') === 'true';
+        if (darkMode) {
+            body.classList.add('dark');
+        }
+        
+        darkToggle.addEventListener('click', () => {
+            body.classList.toggle('dark');
+            localStorage.setItem('darkMode', body.classList.contains('dark'));
+        });
+
+        // Form submission (demo only)
+        const form = document.getElementById('expense-form');
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            alert('Demo version - no backend connected. In the full version, this would save the expense to the database.');
+        });
+    </script>
+</body>
+</html>

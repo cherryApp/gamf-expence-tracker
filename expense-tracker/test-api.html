@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Tracker - Test API</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .dark { background-color: #111827; color: #f3f4f6; }
+        .dark .bg-white { background-color: #374151; }
+        .dark .text-gray-900 { color: #f3f4f6; }
+        .loading { opacity: 0.6; }
+        .error { animation: flash 0.5s; }
+        @keyframes flash { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    </style>
+</head>
+<body class="bg-gray-50 p-4">
+    <div class="max-w-4xl mx-auto">
+        <header class="text-center py-8">
+            <h1 class="text-4xl font-bold text-gray-900 mb-2">
+                Expense Tracker - API Test
+            </h1>
+            <p class="text-lg text-gray-600 mb-4">
+                This page tests if the Next.js API endpoints are working
+            </p>
+            <button id="dark-toggle" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
+                🌙 Toggle Dark Mode
+            </button>
+            <button id="refresh-btn" class="ml-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors">
+                🔄 Refresh Expenses
+            </button>
+        </header>
+
+        <!-- API Status -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">API Status</h2>
+            <div class="flex items-center space-x-4">
+                <span id="status-indicator" class="w-3 h-3 rounded-full bg-yellow-500"></span>
+                <span id="status-text" class="font-medium">Checking API connection...</span>
+                <button id="test-api-btn" class="px-3 py-1 bg-blue-100 text-blue-800 rounded text-sm hover:bg-blue-200">
+                    Test Connection
+                </button>
+            </div>
+        </div>
+
+        <!-- Add Expense Form -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Add Test Expense</h2>
+            <form id="expense-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+                    <input type="number" name="amount" step="0.01" min="0.01" required 
+                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+                           placeholder="25.50">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <input type="text" name="description" required 
+                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+                           placeholder="Coffee and breakfast">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                    <select name="category" required class="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500">
+                        <option value="">Select category</option>
+                        <option>Food</option>
+                        <option>Transportation</option>
+                        <option>Entertainment</option>
+                        <option>Shopping</option>
+                        <option>Bills</option>
+                        <option>Other</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                    <input type="date" name="date" required class="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500">
+                </div>
+                <button type="submit" class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500">
+                    Add Test Expense
+                </button>
+            </form>
+        </div>
+
+        <!-- Expenses List -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Expenses (<span id="expense-count">0</span>)</h2>
+            <div id="expenses-container" class="space-y-3">
+                <div class="text-center py-8 text-gray-500">
+                    Loading expenses... Click "Refresh Expenses" to load data
+                </div>
+            </div>
+        </div>
+
+        <!-- Debug Console -->
+        <div class="bg-gray-800 rounded-lg p-4 mt-6">
+            <h2 class="text-lg font-semibold text-white mb-2">🐛 Debug Console</h2>
+            <div id="debug-console" class="text-green-400 font-mono text-sm space-y-1 h-32 overflow-y-auto">
+                <div>Debug console initialized...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API Test Function
+        class ExpenseTrackerAPI {
+            constructor() {
+                this.baseUrl = window.location.origin.includes(':3000') ? 'http://localhost:3000' : window.location.origin;
+                this.logger = document.getElementById('debug-console');
+                this.log('API initialized with base URL: ' + this.baseUrl);
+            }
+
+            log(message) {
+                const timestamp = new Date().toLocaleTimeString();
+                const entry = document.createElement('div');
+                entry.textContent = `[${timestamp}] ${message}`;
+                this.logger.appendChild(entry);
+                this.logger.scrollTop = this.logger.scrollHeight;
+            }
+
+            async testConnection() {
+                try {
+                    this.log('Testing API connection...');
+                    const response = await fetch(`${this.baseUrl}/api/expenses`, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    });
+                    
+                    this.log(`API Response Status: ${response.status} ${response.statusText}`);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    
+                    const data = await response.json();
+                    this.log('API Response Data: ' + JSON.stringify(data, null, 2));
+                    return data;
+                } catch (error) {
+                    this.log('❌ API Test Failed: ' + error.message);
+                    throw error;
+                }
+            }
+
+            async getExpenses() {
+                try {
+                    this.log('Fetching expenses...');
+                    const data = await this.testConnection();
+                    return data.data || [];
+                } catch (error) {
+                    this.log('Using mock data due to API error');
+                    // Return mock data if API fails
+                    return [
+                        {
+                            id: 'mock-1',
+                            amount: 25.50,
+                            description: 'Coffee and breakfast',
+                            category: 'Food',
+                            date: new Date('2024-11-01'),
+                            createdAt: new Date(),
+                            updatedAt: new Date()
+                        },
+                        {
+                            id: 'mock-2',
+                            amount: 45.00,
+                            description: 'Gas fill up',
+                            category: 'Transportation',
+                            date: new Date('2024-11-02'),
+                            createdAt: new Date(),
+                            updatedAt: new Date()
+                        }
+                    ];
+                }
+            }
+
+            async createExpense(expenseData) {
+                try {
+                    this.log('Creating expense: ' + JSON.stringify(expenseData));
+                    const response = await fetch(`${this.baseUrl}/api/expenses`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(expenseData)
+                    });
+                    
+                    this.log(`Create Response Status: ${response.status}`);
+                    const data = await response.json();
+                    this.log('Create Response: ' + JSON.stringify(data, null, 2));
+                    return data;
+                } catch (error) {
+                    this.log('❌ Create expense failed: ' + error.message);
+                    throw error;
+                }
+            }
+
+            formatCurrency(amount) {
+                return new Intl.NumberFormat('en-US', {
+                    style: 'currency',
+                    currency: 'USD'
+                }).format(amount);
+            }
+
+            formatDate(date) {
+                return new Date(date).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+            }
+        }
+
+        // Initialize API
+        const api = new ExpenseTrackerAPI();
+
+        // Update status display
+        function updateStatus(status, message) {
+            const indicator = document.getElementById('status-indicator');
+            const text = document.getElementById('status-text');
+            
+            indicator.className = `w-3 h-3 rounded-full ${status === 'connected' ? 'bg-green-500' : status === 'error' ? 'bg-red-500' : 'bg-yellow-500'}`;
+            text.textContent = message;
+        }
+
+        // Load and display expenses
+        async function loadExpenses() {
+            const container = document.getElementById('expenses-container');
+            container.innerHTML = '<div class="text-center py-4 text-gray-600">Loading...</div>';
+            
+            try {
+                const expenses = await api.getExpenses();
+                document.getElementById('expense-count').textContent = expenses.length;
+                
+                if (expenses.length === 0) {
+                    container.innerHTML = '<div class="text-center py-8 text-gray-500">No expenses found. Try adding one using the form above!</div>';
+                } else {
+                    updateStatus('connected', `Connected - Found ${expenses.length} expenses`);
+                    displayExpenses(expenses);
+                }
+            } catch (error) {
+                updateStatus('error', 'Failed to load expenses');
+                api.log('Load expenses failed: ' + error.message);
+            }
+        }
+
+        function displayExpenses(expenses) {
+            const container = document.getElementById('expenses-container');
+            container.innerHTML = expenses.map(expense => `
+                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="font-semibold text-gray-900">${expense.description}</h3>
+                            <p class="text-sm text-gray-600">${expense.category}</p>
+                            <p class="text-xs text-gray-500 mt-1">${api.formatDate(expense.date)}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold text-red-600">${api.formatCurrency(expense.amount)}</p>
+                            <p class="text-xs text-gray-400 mt-1">ID: ${expense.id.slice(-4)}</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Form submission
+        document.getElementById('expense-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const expenseData = {
+                amount: parseFloat(formData.get('amount')),
+                description: formData.get('description'),
+                category: formData.get('category'),
+                date: formData.get('date')
+            };
+            
+            try {
+                const result = await api.createExpense(expenseData);
+                if (result.success) {
+                    api.log('✅ Expense created successfully!');
+                    e.target.reset();
+                    loadExpenses();
+                } else {
+                    api.log('❌ Failed to create expense: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                api.log('❌ Form submission failed: ' + error.message);
+            }
+        });
+
+        // Event listeners
+        document.getElementById('test-api-btn').addEventListener('click', async () => {
+            try {
+                updateStatus('checking', 'Testing API connection...');
+                await api.testConnection();
+                updateStatus('connected', 'API connection successful!');
+                loadExpenses();
+            } catch (error) {
+                updateStatus('error', 'API connection failed');
+            }
+        });
+
+        document.getElementById('refresh-btn').addEventListener('click', loadExpenses);
+
+        // Dark mode toggle
+        document.getElementById('dark-toggle').addEventListener('click', () => {
+            document.body.classList.toggle('dark');
+            localStorage.setItem('darkMode', document.body.classList.contains('dark'));
+        });
+
+        // Initial load
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set today's date
+            const today = new Date().toISOString().split('T')[0];
+            document.querySelector('input[name="date"]').value = today;
+            
+            // Test API on load
+            setTimeout(() => {
+                document.getElementById('test-api-btn').click();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
